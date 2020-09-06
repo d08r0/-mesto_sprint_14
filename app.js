@@ -1,9 +1,14 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const helmet = require('helmet');
 const usersRouter = require('./routes/users.js');
 const cardsRouter = require('./routes/cards.js');
+const auth = require('./middlewares/auth.js');
+const { createUser, login } = require('./controllers/users');
+
+console.log(process.env.NODE_ENV);
 
 const { PORT = 3000 } = process.env;
 const app = express();
@@ -21,16 +26,10 @@ mongoose.connect('mongodb://localhost:27017/mestodb', {
 
 app.use(express.static(`${__dirname}/public`));
 
-app.use((req, res, next) => {
-  req.user = {
-    _id: '5f39afb82369d9d35e4bfa6b',
-  };
-
-  next();
-});
-
-app.use('/', usersRouter);
-app.use('/', cardsRouter);
+app.post('/signin', login);
+app.post('/signup', createUser);
+app.use('/', auth, usersRouter);
+app.use('/', auth, cardsRouter);
 
 app.use((req, res, next) => {
   const error = new Error('Not found');
